@@ -1,47 +1,105 @@
 services:
-    mariadb:
-        image: 'mariadb:10'
+    nginx:
+        image: nginx:1.25-alpine3.18
+        container_name: laravel-live-nginx
+        restart: unless-stopped
+        tty: true
+
         ports:
-            - '${FORWARD_DB_PORT:-3306}:3306'
+            - "8080:80"
+        volumes:
+            - ./:/var/www
+            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+            - /var/www/mariadb
+        depends_on:
+            - app
+            - db
+        extra_hosts:
+            - host.docker.internal:host-gateway
+        networks:
+            - laravel-live-network
+
+    app:
+        build:
+            args:
+                user: adityaa
+                uid: 1000
+                env_file: .env
+            context: ./
+            dockerfile: Dockerfile
+        image: laravel-live-app
+        container_name: laravel-live
+        restart: unless-stopped
+        working_dir: /var/www/
+        volumes:
+            - ./:/var/www
+            - /var/www/mariadb
+            - /var/www/redis
+            - ./deploy.prod.sh:/deploy.prod.sh
+
+        expose:
+            - "9000"
+            - "9003"
+        networks:
+            - laravel-live-network
+
+    db:
+        image: mariadb:10.11-jammy
+        container_name: laravel-live-db
+        restart: unless-stopped
         environment:
-            MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
             MYSQL_ROOT_HOST: '%'
-            MYSQL_DATABASE: '${DB_DATABASE}'
-            MYSQL_USER: '${DB_USERNAME}'
-            MYSQL_PASSWORD: '${DB_PASSWORD}'
-            MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
-        volumes:
-            - 'sail-mariadb:/var/lib/mysql'
-        networks:
-            - sail
-        healthcheck:
-            test:
-                - CMD
-                - mysqladmin
-                - ping
-                - '-p${DB_PASSWORD}'
-            retries: 3
-            timeout: 5s
-    redis:
-        image: 'redis:alpine'
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+            MYSQL_USER: ${DB_USERNAME}
+            SERVICE_TAGS: dev
+            SERVICE_NAME: mysql
         ports:
-            - '${FORWARD_REDIS_PORT:-6379}:6379'
+            - "3306:3306"
         volumes:
-            - 'sail-redis:/data'
+            - ./mariadb:/var/lib/mysql
         networks:
-            - sail
-        healthcheck:
-            test:
-                - CMD
-                - redis-cli
-                - ping
-            retries: 3
-            timeout: 5s
+            - laravel-live-network
+
+
+
+    laravel-live-redis:
+        image: redis:latest
+        container_name: laravel-live-redis
+        restart: unless-stopped
+        command: bash -c "redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis}"
+        tty: true
+        depends_on:
+            - app
+        env_file:
+            - .env
+        ports:
+            - "6379:6379"
+        networks:
+            - laravel-live-network
+        volumes:
+            - ./redis:/data
+            - /var/www/mariadb
+            - /var/www/node_modules
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 networks:
-    sail:
+    laravel-live-network:
         driver: bridge
-volumes:
-    sail-mariadb:
-        driver: local
-    sail-redis:
-        driver: local
+
