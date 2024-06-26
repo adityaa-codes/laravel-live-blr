@@ -46,9 +46,6 @@ COPY --from=composer /usr/bin/composer /usr/bin/composer
 COPY --from=node /usr/local/bin/node /usr/local/bin/
 COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
 
-COPY . .
-
-
 
 ENV PATH /usr/local/lib/node_modules/npm/bin:$PATH
 
