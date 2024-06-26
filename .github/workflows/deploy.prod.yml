@@ -20,4 +20,4 @@ jobs:
           username: ${{ secrets.USERNAME }}
           port: ${{ secrets.PORT }}
           key: ${{ secrets.SSHKEY }}
-          script: "cd /laravel-live-blr && ./deploy.prod.sh"
+          script: "cd ~/laravel-live-blr && ./deploy.prod.sh"
