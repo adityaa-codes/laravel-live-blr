@@ -2,9 +2,10 @@ set -e
 
 echo "Deployment Started"
 
+git pull origin master
+
 docker compose down && docker compose up -d
 
-git pull origin master
 
 if [ ! -f /var/www/first_run ]; then
     echo "Running composer install..."
