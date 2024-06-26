@@ -2,7 +2,8 @@ set -e
 
 echo "Deployment Started"
 
-docker compose down && docker compose up -down
+docker compose down && docker compose up -d
+
 git pull origin master
 
 if [ ! -f /var/www/first_run ]; then
