@@ -57,7 +57,6 @@ RUN useradd -G www-data,root -u $uid -d /home/$user $user && \
     mkdir -p /home/$user/.composer && \
     chown -R $user:$user /home/$user
 
-COPY .deploy.prod.sh /deploy.prod.sh
 RUN chmod +x /deploy.prod.sh
 
 USER $user
