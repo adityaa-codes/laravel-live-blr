@@ -2,13 +2,13 @@ set -e
 
 echo "Deployment Started"
 
-cd /var/www || exit
+docker compose down && docker compose up -down
 git pull origin master
-docker compose down && docker compose up -d
 
 if [ ! -f /var/www/first_run ]; then
     echo "Running composer install..."
     composer install --optimize-autoloader
+    php artisan migrate:fresh
 
     echo "Running npm install..."
     /usr/bin/node /usr/bin/npm install
@@ -24,14 +24,11 @@ else
 
 
     composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
-    php artisan migrate
+    php artisan migrate --force
     php artisan storage:link
     php artisan optimize:clear
-    php artisan horizon:terminate
-    php artisan config:cache
-    php artisan route:cache
-    php artisan event:cache
     php artisan optimize
+
     /usr/bin/node /usr/bin/npm install
     /usr/bin/node /usr/bin/npm run build
 
