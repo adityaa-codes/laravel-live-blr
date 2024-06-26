@@ -38,4 +38,4 @@ frankenphp-worker.php
 /database/snapshots/
 /minio
 docker-compose.yml
-
+/redis
